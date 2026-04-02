@@ -2,13 +2,14 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ana Tetris</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
         
         body {
@@ -17,21 +18,33 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: white;
+            padding: 10px;
+            overflow-x: hidden;
         }
         
         h1 {
-            margin-bottom: 20px;
+            margin: 10px 0;
             text-shadow: 0 0 20px rgba(233, 69, 96, 0.8);
-            font-size: 2.5em;
+            font-size: 2em;
         }
         
         .game-container {
             display: flex;
-            gap: 30px;
-            align-items: flex-start;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            width: 100%;
+            max-width: 500px;
+        }
+        
+        @media (min-width: 600px) {
+            .game-container {
+                flex-direction: row;
+                align-items: flex-start;
+            }
         }
         
         canvas {
@@ -39,83 +52,211 @@
             border-radius: 10px;
             box-shadow: 0 0 30px rgba(233, 69, 96, 0.5);
             background: #0a0a0a;
+            max-width: 100%;
+            height: auto;
         }
         
         .sidebar {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 15px;
+            width: 100%;
+        }
+        
+        @media (min-width: 600px) {
+            .sidebar {
+                width: auto;
+                min-width: 150px;
+            }
         }
         
         .info-box {
             background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
+            padding: 15px;
             border-radius: 10px;
             border: 2px solid rgba(233, 69, 96, 0.3);
-            min-width: 150px;
         }
         
         .info-box h3 {
+            margin-bottom: 5px;
+            color: #e94560;
+            font-size: 0.9em;
+        }
+        
+        .info-box p {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        
+        .stats-row {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+        }
+        
+        .stats-row .info-box {
+            flex: 1;
+            text-align: center;
+        }
+        
+        .controls-desktop {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid rgba(233, 69, 96, 0.3);
+        }
+        
+        .controls-desktop h3 {
             margin-bottom: 10px;
             color: #e94560;
         }
         
-        .info-box p {
-            font-size: 1.5em;
-            font-weight: bold;
-        }
-        
-        .controls {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 20px;
-            border-radius: 10px;
-            border: 2px solid rgba(233, 69, 96, 0.3);
-        }
-        
-        .controls h3 {
-            margin-bottom: 15px;
-            color: #e94560;
-        }
-        
-        .controls p {
+        .controls-desktop p {
             margin: 5px 0;
-            font-size: 0.9em;
+            font-size: 0.85em;
+        }
+        
+        @media (max-width: 599px) {
+            .controls-desktop {
+                display: none;
+            }
         }
         
         .btn {
             background: #e94560;
             color: white;
             border: none;
-            padding: 15px 30px;
-            font-size: 1.2em;
+            padding: 12px 25px;
+            font-size: 1.1em;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s;
-            margin-top: 10px;
+            font-family: inherit;
+            touch-action: manipulation;
         }
         
-        .btn:hover {
+        .btn:hover, .btn:active {
             background: #ff6b6b;
             transform: scale(1.05);
         }
         
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* Touch Controls for Mobile */
+        .touch-controls {
+            display: none;
+            width: 100%;
+            max-width: 350px;
+            margin-top: 10px;
+        }
+        
+        @media (max-width: 599px) {
+            .touch-controls {
+                display: block;
+            }
+        }
+        
+        .touch-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .touch-btn {
+            background: linear-gradient(145deg, #2a2a4e, #1a1a2e);
+            border: 2px solid #e94560;
+            color: white;
+            font-size: 1.5em;
+            width: 70px;
+            height: 70px;
+            border-radius: 15px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            touch-action: manipulation;
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+            transition: all 0.1s;
+        }
+        
+        .touch-btn:active {
+            transform: scale(0.9);
+            background: linear-gradient(145deg, #e94560, #ff6b6b);
+            box-shadow: 0 2px 8px rgba(233, 69, 96, 0.5);
+        }
+        
+        .touch-btn.wide {
+            width: 150px;
+            font-size: 1.2em;
+        }
+        
+        .touch-btn.rotate-btn {
+            background: linear-gradient(145deg, #4a1a4e, #3a0a3e);
+            border-color: #a000f0;
+        }
+        
+        .touch-btn.rotate-btn:active {
+            background: linear-gradient(145deg, #a000f0, #c000ff);
+        }
+        
+        .touch-btn.drop-btn {
+            background: linear-gradient(145deg, #1a4e1a, #0a3e0a);
+            border-color: #00f000;
+        }
+        
+        .touch-btn.drop-btn:active {
+            background: linear-gradient(145deg, #00f000, #00ff00);
+        }
+        
+        .touch-btn.pause-btn {
+            background: linear-gradient(145deg, #4e4e1a, #3e3e0a);
+            border-color: #f0f000;
+            font-size: 1.2em;
+        }
+        
+        .touch-btn.pause-btn:active {
+            background: linear-gradient(145deg, #f0f000, #ffff00);
+            color: #1a1a2e;
+        }
+        
         .game-over {
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            padding: 40px;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 30px;
             border-radius: 15px;
             border: 3px solid #e94560;
             text-align: center;
             display: none;
+            z-index: 100;
+            width: 90%;
+            max-width: 350px;
         }
         
         .game-over h2 {
             color: #e94560;
-            margin-bottom: 20px;
-            font-size: 2.5em;
+            margin-bottom: 15px;
+            font-size: 2em;
+        }
+        
+        .swipe-hint {
+            display: none;
+            text-align: center;
+            color: rgba(255,255,255,0.5);
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 599px) {
+            .swipe-hint {
+                display: block;
+            }
         }
     </style>
 </head>
@@ -126,22 +267,22 @@
         <canvas id="gameCanvas" width="300" height="600"></canvas>
         
         <div class="sidebar">
-            <div class="info-box">
-                <h3>Score</h3>
-                <p id="score">0</p>
+            <div class="stats-row">
+                <div class="info-box">
+                    <h3>Score</h3>
+                    <p id="score">0</p>
+                </div>
+                <div class="info-box">
+                    <h3>Level</h3>
+                    <p id="level">1</p>
+                </div>
+                <div class="info-box">
+                    <h3>Lines</h3>
+                    <p id="lines">0</p>
+                </div>
             </div>
             
-            <div class="info-box">
-                <h3>Level</h3>
-                <p id="level">1</p>
-            </div>
-            
-            <div class="info-box">
-                <h3>Lines</h3>
-                <p id="lines">0</p>
-            </div>
-            
-            <div class="controls">
+            <div class="controls-desktop">
                 <h3>Controls</h3>
                 <p>⬅️ ➡️ = Move</p>
                 <p>⬆️ = Rotate</p>
@@ -150,8 +291,25 @@
                 <p>P = Pause</p>
             </div>
             
-            <button class="btn" onclick="startGame()">New Game</button>
+            <button class="btn" onclick="startGame()" id="startBtn">New Game</button>
         </div>
+    </div>
+    
+    <!-- Touch Controls for Mobile -->
+    <div class="touch-controls">
+        <div class="touch-row">
+            <button class="touch-btn rotate-btn" data-action="rotate" title="Rotate">↻</button>
+            <button class="touch-btn pause-btn" data-action="pause" title="Pause">⏸</button>
+        </div>
+        <div class="touch-row">
+            <button class="touch-btn" data-action="left" title="Left">⬅️</button>
+            <button class="touch-btn drop-btn" data-action="drop" title="Hard Drop">⬇️</button>
+            <button class="touch-btn" data-action="right" title="Right">➡️</button>
+        </div>
+        <div class="touch-row">
+            <button class="touch-btn wide" data-action="softdrop" title="Soft Drop">Soft Drop</button>
+        </div>
+        <p class="swipe-hint">💡 Tip: Swipe on the game to move</p>
     </div>
     
     <div class="game-over" id="gameOver">
@@ -197,6 +355,13 @@
         let gameLoop = null;
         let gameOver = false;
         let paused = false;
+        
+        // Touch handling variables
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchStartTime = 0;
+        const SWIPE_THRESHOLD = 30;
+        const TAP_THRESHOLD = 200;
         
         class Piece {
             constructor(shape, color) {
@@ -382,8 +547,27 @@
                 currentPiece.y++;
                 score += 2;
             }
+            mergePiece();
+            clearLines();
+            newPiece();
             updateDisplay();
             draw();
+        }
+        
+        function softDrop() {
+            if (gameOver || paused) return;
+            
+            if (!collision(currentPiece.shape, currentPiece.x, currentPiece.y + 1)) {
+                currentPiece.y++;
+                score += 1;
+                updateDisplay();
+                draw();
+            } else {
+                mergePiece();
+                clearLines();
+                newPiece();
+                draw();
+            }
         }
         
         function togglePause() {
@@ -413,21 +597,95 @@
             gameLoop = setInterval(drop, 1000 / level);
         }
         
-        // Controls
+        // Keyboard Controls
         document.addEventListener('keydown', (e) => {
             switch(e.key) {
                 case 'ArrowLeft': move(-1); break;
                 case 'ArrowRight': move(1); break;
                 case 'ArrowDown': 
-                    drop();
-                    score += 1;
-                    updateDisplay();
+                    softDrop();
                     break;
                 case 'ArrowUp': rotate(); break;
                 case ' ': hardDrop(); break;
                 case 'p': case 'P': togglePause(); break;
             }
         });
+        
+        // Touch Button Controls
+        document.querySelectorAll('.touch-btn').forEach(btn => {
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const action = btn.dataset.action;
+                handleTouchAction(action);
+                btn.style.transform = 'scale(0.9)';
+            }, { passive: false });
+            
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                btn.style.transform = 'scale(1)';
+            });
+            
+            btn.addEventListener('mousedown', (e) => {
+                const action = btn.dataset.action;
+                handleTouchAction(action);
+            });
+        });
+        
+        function handleTouchAction(action) {
+            switch(action) {
+                case 'left': move(-1); break;
+                case 'right': move(1); break;
+                case 'rotate': rotate(); break;
+                case 'drop': hardDrop(); break;
+                case 'softdrop': softDrop(); break;
+                case 'pause': togglePause(); break;
+            }
+        }
+        
+        // Swipe Controls on Canvas
+        canvas.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            touchStartTime = Date.now();
+        }, { passive: true });
+        
+        canvas.addEventListener('touchend', (e) => {
+            if (!touchStartX || !touchStartY) return;
+            
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            const touchDuration = Date.now() - touchStartTime;
+            
+            const diffX = touchEndX - touchStartX;
+            const diffY = touchEndY - touchStartY;
+            
+            // Tap to rotate
+            if (touchDuration < TAP_THRESHOLD && 
+                Math.abs(diffX) < SWIPE_THRESHOLD && 
+                Math.abs(diffY) < SWIPE_THRESHOLD) {
+                rotate();
+            }
+            // Horizontal swipe
+            else if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > SWIPE_THRESHOLD) {
+                if (diffX > 0) {
+                    move(1); // Right
+                } else {
+                    move(-1); // Left
+                }
+            }
+            // Vertical swipe down
+            else if (diffY > SWIPE_THRESHOLD && Math.abs(diffY) > Math.abs(diffX)) {
+                softDrop();
+            }
+            
+            touchStartX = 0;
+            touchStartY = 0;
+        }, { passive: true });
+        
+        // Prevent scrolling when touching the game
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+        }, { passive: false });
         
         // Start game on load
         createBoard();
