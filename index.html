@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ana Tetris</title>
+    <title>Ana Tetris - Leaderboard</title>
     <style>
         * {
             margin: 0;
@@ -66,7 +66,7 @@
         @media (min-width: 600px) {
             .sidebar {
                 width: auto;
-                min-width: 150px;
+                min-width: 200px;
             }
         }
         
@@ -97,6 +97,81 @@
         .stats-row .info-box {
             flex: 1;
             text-align: center;
+        }
+        
+        /* Leaderboard Styles */
+        .leaderboard {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid rgba(233, 69, 96, 0.3);
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        
+        .leaderboard h3 {
+            color: #e94560;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 1.1em;
+        }
+        
+        .leaderboard-list {
+            list-style: none;
+        }
+        
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 5px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9em;
+        }
+        
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+        
+        .leaderboard-item.top-1 {
+            background: linear-gradient(90deg, rgba(255,215,0,0.2), transparent);
+            border-left: 3px solid gold;
+        }
+        
+        .leaderboard-item.top-2 {
+            background: linear-gradient(90deg, rgba(192,192,192,0.2), transparent);
+            border-left: 3px solid silver;
+        }
+        
+        .leaderboard-item.top-3 {
+            background: linear-gradient(90deg, rgba(205,127,50,0.2), transparent);
+            border-left: 3px solid #cd7f32;
+        }
+        
+        .leaderboard-rank {
+            font-weight: bold;
+            width: 30px;
+            color: #e94560;
+        }
+        
+        .leaderboard-name {
+            flex: 1;
+            text-align: left;
+            padding-left: 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .leaderboard-score {
+            font-weight: bold;
+            color: #00f0f0;
+        }
+        
+        .leaderboard-empty {
+            text-align: center;
+            color: rgba(255,255,255,0.5);
+            padding: 20px;
+            font-size: 0.9em;
         }
         
         .controls-desktop {
@@ -142,6 +217,15 @@
         
         .btn:active {
             transform: scale(0.95);
+        }
+        
+        .btn-secondary {
+            background: #2a2a4e;
+            border: 2px solid #e94560;
+        }
+        
+        .btn-secondary:hover {
+            background: #3a3a6e;
         }
         
         /* Touch Controls for Mobile */
@@ -245,6 +329,33 @@
             font-size: 2em;
         }
         
+        .name-input-container {
+            margin: 20px 0;
+        }
+        
+        .name-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #e94560;
+            color: white;
+            padding: 12px 15px;
+            font-size: 1.1em;
+            border-radius: 8px;
+            width: 100%;
+            text-align: center;
+            font-family: inherit;
+            margin-bottom: 10px;
+        }
+        
+        .name-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .name-input:focus {
+            outline: none;
+            border-color: #ff6b6b;
+            box-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+        }
+        
         .swipe-hint {
             display: none;
             text-align: center;
@@ -282,6 +393,14 @@
                 </div>
             </div>
             
+            <!-- Leaderboard -->
+            <div class="leaderboard">
+                <h3>🏆 Leaderboard</h3>
+                <ul class="leaderboard-list" id="leaderboardList">
+                    <li class="leaderboard-empty">No scores yet!<br>Be the first to play!</li>
+                </ul>
+            </div>
+            
             <div class="controls-desktop">
                 <h3>Controls</h3>
                 <p>⬅️ ➡️ = Move</p>
@@ -312,11 +431,22 @@
         <p class="swipe-hint">💡 Tip: Swipe on the game to move</p>
     </div>
     
+    <!-- Game Over Modal -->
     <div class="game-over" id="gameOver">
         <h2>GAME OVER</h2>
         <p>Score: <span id="finalScore">0</span></p>
-        <br>
-        <button class="btn" onclick="startGame()">Try Again</button>
+        
+        <div class="name-input-container" id="nameInputContainer">
+            <p style="margin-bottom: 10px; color: #00f0f0;">🎉 New High Score!</p>
+            <input type="text" class="name-input" id="playerName" placeholder="Enter your name" maxlength="15" autocomplete="off">
+            <button class="btn" onclick="saveScore()">Save Score</button>
+        </div>
+        
+        <div id="savedMessage" style="display: none; margin: 20px 0;">
+            <p style="color: #00f000;">✅ Score saved!</p>
+        </div>
+        
+        <button class="btn btn-secondary" onclick="startGame()" id="tryAgainBtn" style="margin-top: 10px;">Try Again</button>
     </div>
 
     <script>
@@ -355,6 +485,7 @@
         let gameLoop = null;
         let gameOver = false;
         let paused = false;
+        let isHighScore = false;
         
         // Touch handling variables
         let touchStartX = 0;
@@ -362,6 +493,10 @@
         let touchStartTime = 0;
         const SWIPE_THRESHOLD = 30;
         const TAP_THRESHOLD = 200;
+        
+        // Leaderboard
+        const LEADERBOARD_KEY = 'tetris_leaderboard';
+        const MAX_LEADERBOARD_ENTRIES = 10;
         
         class Piece {
             constructor(shape, color) {
@@ -388,10 +523,36 @@
             currentPiece = new Piece(SHAPES[type], COLORS[type]);
             
             if (collision(currentPiece.shape, currentPiece.x, currentPiece.y)) {
-                gameOver = true;
-                document.getElementById('gameOver').style.display = 'block';
-                document.getElementById('finalScore').textContent = score;
-                clearInterval(gameLoop);
+                endGame();
+            }
+        }
+        
+        function endGame() {
+            gameOver = true;
+            clearInterval(gameLoop);
+            
+            // Check if it's a high score
+            const leaderboard = getLeaderboard();
+            isHighScore = leaderboard.length < MAX_LEADERBOARD_ENTRIES || score > leaderboard[leaderboard.length - 1].score;
+            
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameOver').style.display = 'block';
+            
+            // Show/hide name input based on high score
+            const nameInputContainer = document.getElementById('nameInputContainer');
+            const savedMessage = document.getElementById('savedMessage');
+            const tryAgainBtn = document.getElementById('tryAgainBtn');
+            
+            if (isHighScore && score > 0) {
+                nameInputContainer.style.display = 'block';
+                savedMessage.style.display = 'none';
+                tryAgainBtn.textContent = 'Skip & Try Again';
+                document.getElementById('playerName').value = '';
+                document.getElementById('playerName').focus();
+            } else {
+                nameInputContainer.style.display = 'none';
+                savedMessage.style.display = 'none';
+                tryAgainBtn.textContent = 'Try Again';
             }
         }
         
@@ -587,6 +748,7 @@
             lines = 0;
             gameOver = false;
             paused = false;
+            isHighScore = false;
             updateDisplay();
             document.getElementById('gameOver').style.display = 'none';
             
@@ -597,8 +759,89 @@
             gameLoop = setInterval(drop, 1000 / level);
         }
         
+        // Leaderboard Functions
+        function getLeaderboard() {
+            try {
+                const data = localStorage.getItem(LEADERBOARD_KEY);
+                return data ? JSON.parse(data) : [];
+            } catch (e) {
+                return [];
+            }
+        }
+        
+        function saveLeaderboard(leaderboard) {
+            try {
+                localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(leaderboard));
+            } catch (e) {
+                console.error('Could not save leaderboard:', e);
+            }
+        }
+        
+        function renderLeaderboard() {
+            const leaderboard = getLeaderboard();
+            const list = document.getElementById('leaderboardList');
+            
+            if (leaderboard.length === 0) {
+                list.innerHTML = '<li class="leaderboard-empty">No scores yet!<br>Be the first to play!</li>';
+                return;
+            }
+            
+            list.innerHTML = leaderboard.map((entry, index) => {
+                const rankClass = index < 3 ? `top-${index + 1}` : '';
+                const rankEmoji = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+                return `
+                    <li class="leaderboard-item ${rankClass}">
+                        <span class="leaderboard-rank">${rankEmoji}</span>
+                        <span class="leaderboard-name">${escapeHtml(entry.name)}</span>
+                        <span class="leaderboard-score">${entry.score.toLocaleString()}</span>
+                    </li>
+                `;
+            }).join('');
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function saveScore() {
+            const nameInput = document.getElementById('playerName');
+            let name = nameInput.value.trim();
+            
+            if (!name) {
+                name = 'Anonymous';
+            }
+            
+            const leaderboard = getLeaderboard();
+            leaderboard.push({
+                name: name,
+                score: score,
+                date: new Date().toISOString()
+            });
+            
+            // Sort by score (descending) and keep top 10
+            leaderboard.sort((a, b) => b.score - a.score);
+            if (leaderboard.length > MAX_LEADERBOARD_ENTRIES) {
+                leaderboard.length = MAX_LEADERBOARD_ENTRIES;
+            }
+            
+            saveLeaderboard(leaderboard);
+            renderLeaderboard();
+            
+            // Show saved message
+            document.getElementById('nameInputContainer').style.display = 'none';
+            document.getElementById('savedMessage').style.display = 'block';
+            document.getElementById('tryAgainBtn').textContent = 'Try Again';
+        }
+        
         // Keyboard Controls
         document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && gameOver && isHighScore && document.getElementById('nameInputContainer').style.display !== 'none') {
+                saveScore();
+                return;
+            }
+            
             switch(e.key) {
                 case 'ArrowLeft': move(-1); break;
                 case 'ArrowRight': move(1); break;
@@ -687,10 +930,11 @@
             e.preventDefault();
         }, { passive: false });
         
-        // Start game on load
+        // Initialize
         createBoard();
         draw();
         newPiece();
+        renderLeaderboard();
     </script>
 </body>
 </html>
